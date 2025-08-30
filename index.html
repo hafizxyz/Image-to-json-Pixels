@@ -18,7 +18,8 @@
   <button onclick="convertImage()">Convert</button>
 
   <h2>JSON Output</h2>
-  <textarea id="output" readonly></textarea>
+  <textarea id="output" readonly></textarea><br>
+  <button onclick="downloadJSON()">Download JSON</button>
 
   <h2>Preview</h2>
   <div class="preview-container">
@@ -93,6 +94,24 @@
         img.src = e.target.result;
       };
       reader.readAsDataURL(fileInput.files[0]);
+    }
+
+    function downloadJSON() {
+      const output = document.getElementById("output").value;
+      if (!output) {
+        alert("No JSON data to download!");
+        return;
+      }
+
+      const blob = new Blob([output], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "pixels.json"; // You can change to "pixels.html" if preferred
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     }
   </script>
 </body>
