@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Image to Pixel JSON</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    textarea { width: 100%; height: 300px; }
+    .preview-container { display: flex; gap: 20px; margin-top: 20px; }
+    canvas { border: 1px solid #ccc; image-rendering: pixelated; }
+  </style>
+</head>
+<body>
+  <h1>Image to Pixel JSON Converter</h1>
+
+  <input type="file" id="upload" accept="image/*"><br><br>
+  <label>Size: <input type="number" id="size" value="64" min="1" max="512"></label>
+  <button onclick="convertImage()">Convert</button>
+
+  <h2>JSON Output</h2>
+  <textarea id="output" readonly></textarea>
+
+  <h2>Preview</h2>
+  <div class="preview-container">
+    <div>
+      <p><b>Resized Image</b></p>
+      <canvas id="canvas"></canvas>
+    </div>
+    <div>
+      <p><b>JSON Pixel Art</b></p>
+      <canvas id="jsonCanvas"></canvas>
+    </div>
+  </div>
+
+  <script>
+    function convertImage() {
+      const fileInput = document.getElementById("upload");
+      const size = parseInt(document.getElementById("size").value);
+      const output = document.getElementById("output");
+      const canvas = document.getElementById("canvas");
+      const ctx = canvas.getContext("2d");
+      const jsonCanvas = document.getElementById("jsonCanvas");
+      const jctx = jsonCanvas.getContext("2d");
+
+      if (!fileInput.files[0]) {
+        alert("Please upload an image first.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+          // Draw resized preview
+          canvas.width = size;
+          canvas.height = size;
+          ctx.drawImage(img, 0, 0, size, size);
+          const data = ctx.getImageData(0, 0, size, size).data;
+
+          // Build pixel JSON
+          let pixels = [];
+          for (let y = 0; y < size; y++) {
+            let row = [];
+            for (let x = 0; x < size; x++) {
+              const i = (y * size + x) * 4;
+              row.push([data[i], data[i+1], data[i+2]]);
+            }
+            pixels.push(row);
+          }
+
+          const jsonData = {
+            "Scaling": 1,
+            "Size": { "X": size, "Y": size },
+            "Pixels": pixels
+          };
+
+          // Show JSON
+          output.value = JSON.stringify(jsonData, null, 2);
+
+          // Draw pixel art from JSON
+          const scale = 4; // scale up so it's visible
+          jsonCanvas.width = size * scale;
+          jsonCanvas.height = size * scale;
+
+          for (let y = 0; y < size; y++) {
+            for (let x = 0; x < size; x++) {
+              const [r, g, b] = pixels[y][x];
+              jctx.fillStyle = `rgb(${r},${g},${b})`;
+              jctx.fillRect(x * scale, y * scale, scale, scale);
+            }
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+  </script>
+</body>
+</html>
